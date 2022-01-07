@@ -17,11 +17,12 @@ namespace KataBasket
 			Items.Add(item);
 		}
 
-		public decimal GetTotalPrice()
+		public decimal GetTotalPrice(IOffer offer = null)
 		{
 			var totalPrice = Items.Sum(i => i.Price);
+			var offerPrice = (offer?.Apply(Items)) ?? 0.0m;
 
-			return totalPrice;
+			return totalPrice - offerPrice;
 		}
 	}
 }
