@@ -5,123 +5,116 @@ namespace KataBasket.Tests
 {
 	public class CheckoutTests
 	{
-		private const string Apple = "A99";
-		private const string Biscuits = "B15";
+		private readonly Item Apple = new("A99", 0.50m);
+		private readonly Item Biscuits = new("B15", 0.30m);
+		private Checkout _checkout;
+
+
+		[SetUp]
+		public void Setup()
+		{
+			_checkout = new Checkout();
+		}
 
 		[Test]
 		public void GivenItems_ShouldScannIt()
 		{
 			var items = new List<Item>
 			{
-				new Item(Apple, 0.50m),
-				new Item(Biscuits, 0.30m),
-				new Item(Apple, 0.50m)
+				Apple,
+				Biscuits,
+				Apple
 			};
 
-			var checkout = new Checkout();
+			items.ForEach(_checkout.Scan);
 
-			foreach (var item in items)
-			{
-				checkout.Scan(item);
-			}
-
-			Assert.That(checkout.Items.Count, Is.EqualTo(items.Count));
-			CollectionAssert.AreEquivalent(checkout.Items, items);
+			Assert.That(_checkout.Items.Count, Is.EqualTo(items.Count));
+			CollectionAssert.AreEquivalent(_checkout.Items, items);
 		}
 
 		[Test]
 		public void GivenNoItemScanned_ShouldGiveZero()
 		{
-			var checkout = new Checkout();
+			_checkout.Scan(null);
 
-			checkout.Scan(null);
-			Assert.That(checkout.GetTotalPrice(), Is.EqualTo(0));
+			Assert.That(_checkout.GetTotalPrice(), Is.EqualTo(0));
 		}
 
 		[Test]
 		public void GivenItemScanned_ShouldGiveTotalPrice()
 		{
-			var apple = new Item(Apple, 0.50m);
-			var biscuits = new Item(Biscuits, 0.30m);
-			var checkout = new Checkout();
+			_checkout.Scan(Apple);
+			Assert.That(_checkout.GetTotalPrice(), Is.EqualTo(Apple.Price));
 
-			checkout.Scan(apple);
-			Assert.That(checkout.GetTotalPrice(), Is.EqualTo(apple.Price));
-
-			checkout.Scan(biscuits);
-			Assert.That(checkout.GetTotalPrice(), Is.EqualTo(apple.Price + biscuits.Price));
+			_checkout.Scan(Biscuits);
+			Assert.That(_checkout.GetTotalPrice(), Is.EqualTo(Apple.Price + Biscuits.Price));
 		}
 
 		[Test]
 		public void GivenItemScanned_WhenOfferExists_ShouldGiveTotalPriceWithOffer()
 		{
-			var apples = new List<Item> {
-				new Item (Apple, 0.50m),
-				new Item (Apple, 0.50m),
-				new Item (Apple, 0.50m)
+			const decimal expectedOfferPrice = 1.60m;
+			var items = new List<Item> {
+				Apple,
+				Biscuits,
+				Apple,
+				Apple
 			};
 
-			var biscuits = new Item(Biscuits, 0.30m);
-			var appleOffer = new QuantityOfferPrice(Apple, 3, 0.20m);
-			const decimal expectedOfferPrice = 1.60m;
+			var appleOffer = new QuantityOfferPrice(Apple.SKU, 3, 0.20m);
 
-			var checkout = new Checkout();
-			apples.ForEach(checkout.Scan);
-			checkout.Scan(biscuits);
+			items.ForEach(_checkout.Scan);
 
-			Assert.That(checkout.GetTotalPrice(appleOffer), Is.EqualTo(expectedOfferPrice));
+			Assert.That(_checkout.GetTotalPrice(appleOffer), Is.EqualTo(expectedOfferPrice));
 		}
 
 		[Test]
 		public void GivenMultiItemScanned_WhenOfferExists_ShouldGiveTotalPriceWithOffer()
 		{
-			var items = new List<Item> {
-				new Item (Apple, 0.50m),
-				new Item (Apple, 0.50m),
-				new Item (Apple, 0.50m),
-				new Item (Apple, 0.50m),
-				new Item (Apple, 0.50m),
-				new Item (Apple, 0.50m),
-				new Item (Apple, 0.50m),
-				new Item (Biscuits,  0.30m)
-		};
-
-
-			var appleOffer = new QuantityOfferPrice(Apple, 3, 0.20m);
 			const decimal expectedOfferPrice = (2 * 1.3m) + 0.5m + 0.3m;
+			var items = new List<Item> {
+				Apple,
+				Apple,
+				Apple,
+				Biscuits,
+				Apple,
+				Apple,
+				Apple,
+				Apple,
+			};
 
-			var checkout = new Checkout();
-			items.ForEach(checkout.Scan);
+			var appleOffer = new QuantityOfferPrice(Apple.SKU, 3, 0.20m);
 
-			Assert.That(checkout.GetTotalPrice(appleOffer), Is.EqualTo(expectedOfferPrice));
+			items.ForEach(_checkout.Scan);
+
+			Assert.That(_checkout.GetTotalPrice(appleOffer), Is.EqualTo(expectedOfferPrice));
 		}
 
 		[Test]
 		public void GivenMultiItemScanned_WhenMultiOfferExists_ShouldGiveTotalPriceWithOffer()
 		{
+			const decimal expectedOfferPrice = (2 * 1.30m) + 0.5m + (2 * 0.45m) + 0.30m;
 			var items = new List<Item> {
-				new Item (Apple, 0.50m),
-				new Item (Apple, 0.50m),
-				new Item (Biscuits, 0.30m),
-				new Item (Biscuits, 0.30m),
-				new Item (Apple, 0.50m),
-				new Item (Apple, 0.50m),
-				new Item (Apple, 0.50m),
-				new Item (Apple, 0.50m),
-				new Item (Apple, 0.50m),
-				new Item (Biscuits, 0.30m),
-				new Item (Biscuits, 0.30m),
-				new Item (Biscuits, 0.30m)
+				Apple,
+				Apple,
+				Biscuits,
+				Apple,
+				Biscuits,
+				Apple,
+				Apple,
+				Biscuits,
+				Apple,
+				Biscuits,
+				Apple,
+				Biscuits
 			};
 
-			var appleOffer = new QuantityOfferPrice(Apple, 3, 0.20m);
-			var biscuitsOffer = new QuantityOfferPrice(Biscuits, 2, 0.15m);
-			const decimal expectedOfferPrice = (2 * 1.30m) + 0.5m + (2 * 0.45m) + 0.30m;
+			var appleOffer = new QuantityOfferPrice(Apple.SKU, 3, 0.20m);
+			var biscuitsOffer = new QuantityOfferPrice(Biscuits.SKU, 2, 0.15m);
 
-			var checkout = new Checkout();
-			items.ForEach(checkout.Scan);
+			items.ForEach(_checkout.Scan);
 
-			Assert.That(checkout.GetTotalPrice(appleOffer, biscuitsOffer), Is.EqualTo(expectedOfferPrice));
+			Assert.That(_checkout.GetTotalPrice(appleOffer, biscuitsOffer), Is.EqualTo(expectedOfferPrice));
 		}
 	}
 }
