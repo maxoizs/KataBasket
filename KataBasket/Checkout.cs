@@ -14,13 +14,21 @@ namespace KataBasket
 
 		public void Scan(Item item)
 		{
-			Items.Add(item);
+			if (item != default(Item))
+			{
+				Items.Add(item);
+			}
 		}
 
-		public decimal GetTotalPrice(IOffer offer = null)
+		public decimal GetTotalPrice(params IOffer[] offers)
 		{
 			var totalPrice = Items.Sum(i => i.Price);
-			var offerPrice = (offer?.Apply(Items)) ?? 0.0m;
+			var offerPrice = 0.0m;
+
+			foreach (IOffer offer in offers)
+			{
+				offerPrice += offer.Apply(Items);
+			}
 
 			return totalPrice - offerPrice;
 		}
